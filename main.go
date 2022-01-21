@@ -4,35 +4,18 @@ import (
 	"bufio"
 	"fmt"
 	"net"
-	"net/http"
 	"strings"
 	"time"
 )
 
 func main() {
-	// Startup the HTTP server for receiving proxy messages
-	h := HttpHandler{}
-
-	httpServer := &http.Server{
-		Addr:    "127.0.0.1:8889",
-		Handler: h,
-	}
-
-	go func() {
-		err := httpServer.ListenAndServe()
-		if err != nil {
-			panic(err)
-		}
-	}()
-
-	// TODO wg
-	h.Listen("19735")
+	Listen("19735")
 }
 
 // create an http handler for the proxy server
 type HttpHandler struct{}
 
-func (h HttpHandler) Listen(portArg string) {
+func Listen(portArg string) {
 	// Listen on TCP port
 	PORT := ":" + portArg
 	l, err := net.Listen("tcp", PORT)
@@ -69,9 +52,4 @@ func (h HttpHandler) Listen(portArg string) {
 		c.Write([]byte(myTime))
 	}
 
-}
-
-func (h HttpHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
-	data := []byte("Hello World!")
-	res.Write(data)
 }

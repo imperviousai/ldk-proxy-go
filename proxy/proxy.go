@@ -17,7 +17,9 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func address_decode(address_bin []byte) (string, string) {
+// TODO parse
+func address_decode() (string, string) {
+	// TCP host, port - this is where the remote node is
 	var host string = "127.0.0.1"
 	var port string = "19735"
 
@@ -29,7 +31,6 @@ func forwardtcp(wsconn *websocket.Conn, conn net.Conn) {
 	for {
 		// Receive and forward pending data from tcp socket to web socket
 		tcpbuffer := make([]byte, 1024)
-
 		n, err := conn.Read(tcpbuffer)
 		if err == io.EOF {
 			fmt.Printf("TCP Read failed")
@@ -37,14 +38,12 @@ func forwardtcp(wsconn *websocket.Conn, conn net.Conn) {
 		}
 		if err == nil {
 			fmt.Printf("Forwarding from tcp to ws: %d bytes: %s\n", n, tcpbuffer)
-			// print_binary(tcpbuffer)
 			wsconn.WriteMessage(websocket.BinaryMessage, tcpbuffer[:n])
 		}
 	}
 }
 
 func forwardws(wsconn *websocket.Conn, conn net.Conn) {
-
 	for {
 		// Send pending data to tcp socket
 		n, buffer, err := wsconn.ReadMessage()
@@ -69,25 +68,13 @@ func wsProxyHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Received websocket connection")
 
 	wsconn, err := upgrader.Upgrade(w, r, nil)
-
 	if err != nil {
 		panic(err)
 	}
 
-	// get connection address and port
-	address := make([]byte, 16)
+	host, port := address_decode()
 
-	/*
-		n, address, err := wsconn.ReadMessage()
-		if err != nil {
-			fmt.Printf("address read error")
-			fmt.Printf("read %d bytes", n)
-		}
-
-	*/
-
-	host, port := address_decode(address)
-
+	// Connect to remote node
 	conn, err := net.Dial("tcp", host+":"+port)
 	if err != nil {
 		panic(err)
