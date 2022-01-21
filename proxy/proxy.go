@@ -16,7 +16,7 @@ var upgrader = websocket.Upgrader{
 
 func address_decode(address_bin []byte) (string, string) {
 	var host string = "127.0.0.1"
-	var port string = "2222"
+	var port string = "19735"
 
 	return host, port
 }
@@ -63,6 +63,8 @@ func forwardws(wsconn *websocket.Conn, conn net.Conn) {
 }
 
 func wsProxyHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Received websocket connection")
+
 	wsconn, err := upgrader.Upgrade(w, r, nil)
 
 	if err != nil {
@@ -87,14 +89,17 @@ func wsProxyHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("Started tcp connection to " + host + ":" + port)
 
 	go forwardtcp(wsconn, conn)
 	go forwardws(wsconn, conn)
 
-	fmt.Printf("forwarding started")
+	fmt.Println("forwarding started")
 }
 
 func main() {
+	fmt.Println("Starting websocket: 127.0.0.1:8080/proxy")
+
 	http.HandleFunc("/proxy", wsProxyHandler)
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
